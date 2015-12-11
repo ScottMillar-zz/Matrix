@@ -1,0 +1,65 @@
+
+Matrix compare(Matrix shuffledLogoMatrix, Matrix noisyLogoMatrix)
+{
+	double* data = new double[512 * 512];
+	Matrix unshuffledLogoMatrix(512, 512, data);
+
+	// Loop each row in shuffled image
+	for (int M = 0; M < 512; M += 32)
+	{
+		// Loop for each column within row in shuffled image
+		for (int N = 0; N < 512; N += 32)
+		{
+			// Get current block
+			Matrix blockI(noisyLogoMatrix.getBlock(M, M + 31, N, N + 31));
+
+			double SSDResult = 99999999999999;
+			int row, column;
+
+			// Loop each row in noisy logo
+			for (int X = 0; X < 512; X += 32)
+			{
+				// Loop each column within row in noisy logo
+				for (int Y = 0; Y < 512; Y += 32)
+				{
+					// Get current block
+					Matrix blockT(shuffledLogoMatrix.getBlock(X, X + 31, Y, Y + 31));
+					// Perform SSD
+					double temp = SSD(blockI, blockT);
+					if (temp < SSDResult)
+					{
+						SSDResult = temp;
+						row = X;
+						column = Y;
+					}
+				}
+			}
+			// Copy the shuffledLogo block into the correct position
+			unshuffledLogoMatrix.setBlock(M, N, shuffledLogoMatrix.getBlock(row, row + 31, column, column + 31));
+		}
+	}
+
+	// data should get deleted when it falls out of scope, but being explicit here
+	//delete[] data;
+	return unshuffledLogoMatrix;
+}
+
+double SSD(Matrix blockI, Matrix blockT)
+{
+	double sum = 0;
+
+	// Assign blockD to be the difference between blocks I and T
+	Matrix blockD = blockI - blockT;
+
+	// Square the difference
+	blockD = blockD * blockD;
+
+	for (int i = 0; i < blockD.getM(); i++)
+	{
+		for (int j = 0; j < blockD.getN(); j++)
+		{
+			sum = sum + blockD.get(i,j);
+		}
+	}
+	return sum;
+}
